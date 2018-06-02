@@ -15,7 +15,7 @@ module.exports = ()=>{
 			this.channelID = in_set.ChID;
 			this.subTitle = in_set.SubTitle;
 			this.url = in_set.Urls;
-			this.minogashi = in_set.UPSFlag==1? true: false;
+			this.minogashi = (in_set.UPSFlag==1);
 			this.tid = in_set.TID;
 			this.subtitleListUrl = "http://cal.syoboi.jp/tid/"+this.tid+"/subtitle";
 		}
@@ -75,11 +75,12 @@ module.exports = ()=>{
 	let userName = "hirarira617";
 	let in_url = "http://cal.syoboi.jp/rss2.php?filter=1&alt=json&usr=" + userName + 
 		"&start=" + startDateFormat + "&end=" + endDateFormat;
-	console.log("test1");
+	console.log(in_url);
 	getRequest(in_url).then( (result) => {
+		let postStrList = [];
 		let AnimeDataSet = [];
-		console.log("test2");
 		let importAnimeSet = JSON.parse(result);
+		const insertAnimeStr = "見逃しアニメの続きは以下のとおりです。\n";
 		let outstr = "先週までの見逃しアニメは以下の通りです。\n";
 		for(let i=0;i<importAnimeSet.items.length;i++){
 			AnimeDataSet[i] = new AnimeData(importAnimeSet.items[i]);
@@ -89,13 +90,26 @@ module.exports = ()=>{
 				outstr += "```\n\n";
 				// 3000 Byteを超えていたら一旦投稿する。
 				if(Buffer.byteLength(outstr,"utf-8") > 3000 ){
-					postSlack( outstr );
-					outstr = "見逃しアニメの続きは以下のとおりです。\n";
+					postStrList.push(outstr);
+					console.log("a");
+					outstr = insertAnimeStr;
 				}	
 			}
 		}
-		postSlack( outstr );
-		console.log(outstr);
-		console.log("len:"+Buffer.byteLength(outstr,"utf-8"));
+		if(outstr !== insertAnimeStr){
+			postStrList.push(outstr);
+		}
+		console.log(postStrList);
+		for(let i=0; i<postStrList.length; i++){
+			console.log(i+":\n");
+			console.log(postStrList[i]);
+			console.log("\n----\n");
+		}
+		postStrList.reduce((prev, current)=>{
+			return prev.then((res)=>{
+				console.log(res);
+				return postSlack(current);
+			});
+		}, Promise.resolve());
 	});
 }
