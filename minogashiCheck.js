@@ -1,7 +1,7 @@
 module.exports = ()=>{
 	"use strict";
 	require('date-utils');
-	const postSlack = require("./SlackPost.js");
+	const postSlack = require("./slackPost.js");
 	const YOUBI = ["日","月","火","水","木","金","土"];
 	// TODO 先週一週間の内、見逃したアニメを表示する
 	// アニメデータを蓄積するためのclass
@@ -64,46 +64,48 @@ module.exports = ()=>{
 	 * https://sites.google.com/site/syobocal/spec/rss2-php
 	 *
 	 */
-	// 今日の日付
-	let endDate = new Date();
-	let endDateFormat = endDate.toFormat('YYYYMMDDHH24MI');
-	// 開始時日付
-	let startDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() - 7,
-		endDate.getHours(), endDate.getMinutes());
-	let startDateFormat = startDate.toFormat('YYYYMMDDHH24MI');
-	// UPSFlag
-	let userName = "hirarira617";
-	let in_url = "http://cal.syoboi.jp/rss2.php?filter=1&alt=json&usr=" + userName +
-		"&start=" + startDateFormat + "&end=" + endDateFormat;
-	console.log(in_url);
-	getRequest(in_url).then( (result) => {
-		let postStrList = [];
-		let AnimeDataSet = [];
-		let importAnimeSet = JSON.parse(result);
-		const insertAnimeStr = "見逃しアニメの続きは以下のとおりです。\n";
-		let outstr = "先週までの見逃しアニメは以下の通りです。\n";
-		for(let i=0;i<importAnimeSet.items.length;i++){
-			AnimeDataSet[i] = new AnimeData(importAnimeSet.items[i]);
-			if(AnimeDataSet[i].getMinogashi() ){
-				outstr += "```\nNo. " + i + "\n";
-				outstr += AnimeDataSet[i].showInfo() + "\n";
-				outstr += "```\n\n";
-				// 3000 Byteを超えていたら一旦投稿する。
-				if(Buffer.byteLength(outstr,"utf-8") > 3000 ){
-					postStrList.push(outstr);
-					outstr = insertAnimeStr;
+	return new Promise((resolve, reject)=>{
+		// 今日の日付
+		let endDate = new Date();
+		let endDateFormat = endDate.toFormat('YYYYMMDDHH24MI');
+		// 開始時日付
+		let startDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() - 7,
+			endDate.getHours(), endDate.getMinutes());
+		let startDateFormat = startDate.toFormat('YYYYMMDDHH24MI');
+		// UPSFlag
+		let userName = "hirarira617";
+		let in_url = "http://cal.syoboi.jp/rss2.php?filter=1&alt=json&usr=" + userName +
+			"&start=" + startDateFormat + "&end=" + endDateFormat;
+		console.log(in_url);
+		getRequest(in_url).then( (result) => {
+			let postStrList = [];
+			let AnimeDataSet = [];
+			let importAnimeSet = JSON.parse(result);
+			const insertAnimeStr = "見逃しアニメの続きは以下のとおりです。\n";
+			let outstr = "先週までの見逃しアニメは以下の通りです。\n";
+			for(let i=0;i<importAnimeSet.items.length;i++){
+				AnimeDataSet[i] = new AnimeData(importAnimeSet.items[i]);
+				if(AnimeDataSet[i].getMinogashi() ){
+					outstr += "```\nNo. " + i + "\n";
+					outstr += AnimeDataSet[i].showInfo() + "\n";
+					outstr += "```\n\n";
+					// 3000 Byteを超えていたら一旦投稿する。
+					if(Buffer.byteLength(outstr,"utf-8") > 3000 ){
+						postStrList.push(outstr);
+						outstr = insertAnimeStr;
+					}
 				}
 			}
-		}
-		if(outstr !== insertAnimeStr){
-			postStrList.push(outstr);
-		}
-		return postStrList;
-		// postStrList.reduce((prev, current)=>{
-		// 	return prev.then((res)=>{
-		// 		console.log(res);
-		// 		return postSlack(current);
-		// 	});
-		// }, Promise.resolve());
+			if(outstr !== insertAnimeStr){
+				postStrList.push(outstr);
+			}
+			resolve(postStrList);
+			// postStrList.reduce((prev, current)=>{
+			// 	return prev.then((res)=>{
+			// 		console.log(res);
+			// 		return postSlack(current);
+			// 	});
+			// }, Promise.resolve());
+		});
 	});
 }

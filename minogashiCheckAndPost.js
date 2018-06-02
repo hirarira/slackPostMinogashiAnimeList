@@ -1,7 +1,7 @@
 module.exports = ()=>{
 	"use strict";
 	require('date-utils');
-	const postSlack = require("./SlackPost.js");
+	const postSlack = require("./slackPost.js");
 	const YOUBI = ["日","月","火","水","木","金","土"];
 	// TODO 先週一週間の内、見逃したアニメを表示する
 	// アニメデータを蓄積するためのclass
