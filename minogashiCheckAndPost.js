@@ -62,7 +62,7 @@ module.exports = ()=>{
 	/*
 	 * しょぼカレ仕様
 	 * https://sites.google.com/site/syobocal/spec/rss2-php
-	 *
+	 * 
 	 */
 	// 今日の日付
 	let endDate = new Date();
@@ -73,7 +73,7 @@ module.exports = ()=>{
 	let startDateFormat = startDate.toFormat('YYYYMMDDHH24MI');
 	// UPSFlag
 	let userName = "hirarira617";
-	let in_url = "http://cal.syoboi.jp/rss2.php?filter=1&alt=json&usr=" + userName +
+	let in_url = "http://cal.syoboi.jp/rss2.php?filter=1&alt=json&usr=" + userName + 
 		"&start=" + startDateFormat + "&end=" + endDateFormat;
 	console.log(in_url);
 	getRequest(in_url).then( (result) => {
@@ -91,19 +91,25 @@ module.exports = ()=>{
 				// 3000 Byteを超えていたら一旦投稿する。
 				if(Buffer.byteLength(outstr,"utf-8") > 3000 ){
 					postStrList.push(outstr);
+					console.log("a");
 					outstr = insertAnimeStr;
-				}
+				}	
 			}
 		}
 		if(outstr !== insertAnimeStr){
 			postStrList.push(outstr);
 		}
-		return postStrList;
-		// postStrList.reduce((prev, current)=>{
-		// 	return prev.then((res)=>{
-		// 		console.log(res);
-		// 		return postSlack(current);
-		// 	});
-		// }, Promise.resolve());
+		console.log(postStrList);
+		for(let i=0; i<postStrList.length; i++){
+			console.log(i+":\n");
+			console.log(postStrList[i]);
+			console.log("\n----\n");
+		}
+		postStrList.reduce((prev, current)=>{
+			return prev.then((res)=>{
+				console.log(res);
+				return postSlack(current);
+			});
+		}, Promise.resolve());
 	});
 }
